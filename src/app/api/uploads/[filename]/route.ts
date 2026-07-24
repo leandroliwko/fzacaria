@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile, stat } from 'fs/promises'
 import path from 'path'
+import { existsSync } from 'fs'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
+/**
+ * On Vercel: files are written to /tmp/uploads (ephemeral but writable).
+ * On Railway / local: files are in public/uploads (persistent).
+ * This route serves from BOTH locations, checking /tmp first.
+ */
+
+const TMP_UPLOAD_DIR = path.join('/tmp', 'uploads')
+const STATIC_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 
 // MIME type map
 const MIME_TYPES: Record<string, string> = {
@@ -14,6 +22,10 @@ const MIME_TYPES: Record<string, string> = {
   '.bmp': 'image/bmp',
   '.avif': 'image/avif',
   '.svg': 'image/svg+xml',
+  '.mp4': 'video/mp4',
+  '.avi': 'video/avi',
+  '.mov': 'video/quicktime',
+  '.webm': 'video/webm',
 }
 
 export async function GET(
@@ -29,18 +41,23 @@ export async function GET(
       return NextResponse.json({ error: 'Nombre de archivo inválido' }, { status: 400 })
     }
 
-    const filePath = path.join(UPLOAD_DIR, safeName)
+    // Try /tmp/uploads first (Vercel runtime uploads), then public/uploads (static)
+    const candidates = [TMP_UPLOAD_DIR, STATIC_UPLOAD_DIR]
+    let filePath: string | null = null
+    let fileStat: any = null
 
-    // Ensure the resolved path is still within UPLOAD_DIR
-    if (!filePath.startsWith(UPLOAD_DIR)) {
-      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 })
+    for (const dir of candidates) {
+      const candidate = path.join(dir, safeName)
+      // Ensure the resolved path is still within the directory
+      if (!candidate.startsWith(dir)) continue
+      if (existsSync(candidate)) {
+        filePath = candidate
+        fileStat = await stat(candidate)
+        break
+      }
     }
 
-    // Check file exists
-    let fileStat
-    try {
-      fileStat = await stat(filePath)
-    } catch {
+    if (!filePath || !fileStat) {
       return NextResponse.json({ error: 'Imagen no encontrada' }, { status: 404 })
     }
 
@@ -61,7 +78,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Error serving image:', error)
+    console.error('Error serving file:', error)
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 })
   }
 }

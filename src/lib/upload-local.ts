@@ -1,24 +1,38 @@
 /**
- * Local file upload utility - replaces @vercel/blob
- * Saves files to public/uploads/ directory on the server filesystem.
- * Compatible with Railway (persistent volume) and any Node.js hosting.
+ * Local file upload utility — compatible with Vercel (serverless) and Railway (persistent).
+ *
+ * On Vercel: writes to /tmp/uploads (ephemeral but writable), served via /api/uploads/[filename].
+ * On Railway / local: writes to public/uploads (persistent), served as static files.
  */
 
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
+/**
+ * Detect if running on Vercel serverless (no persistent writable filesystem).
+ */
+function isVercel(): boolean {
+  return !!process.env.VERCEL || !!process.env.VERCEL_ENV
+}
+
+/**
+ * Get the upload directory — /tmp/uploads on Vercel, public/uploads elsewhere.
+ */
+function getUploadDir(): string {
+  if (isVercel()) {
+    return path.join('/tmp', 'uploads')
+  }
+  return path.join(process.cwd(), 'public', 'uploads')
+}
 
 /**
  * Get the base URL for uploads based on the current environment.
  */
 function getBaseUrl(): string {
-  // In production, use the site URL env var or the request host
   if (process.env.NEXT_PUBLIC_SITE_URL) {
     return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')
   }
-  // Fallback for Railway
   if (process.env.RAILWAY_PUBLIC_DOMAIN) {
     return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
   }
@@ -37,6 +51,8 @@ export async function localPut(
     access?: string
   } = {}
 ): Promise<{ url: string }> {
+  const UPLOAD_DIR = getUploadDir()
+
   // Ensure upload directory exists
   if (!existsSync(UPLOAD_DIR)) {
     await mkdir(UPLOAD_DIR, { recursive: true })
@@ -73,9 +89,9 @@ export async function localPut(
   // Write file to disk
   await writeFile(filePath, buffer)
 
-  // Return public URL
+  // Return public URL (served via /api/uploads/[filename] on Vercel, or /uploads/[filename] as static elsewhere)
   const baseUrl = getBaseUrl()
-  const url = `${baseUrl}/uploads/${uniqueName}`
+  const url = `${baseUrl}/api/uploads/${uniqueName}`
 
   return { url }
 }
@@ -86,10 +102,10 @@ export async function localPut(
 export async function localDel(url: string): Promise<void> {
   try {
     const { unlink } = await import('fs/promises')
-    // Extract filename from URL
-    const filename = url.split('/uploads/').pop()
+    const filename = url.split('/uploads/').pop() || url.split('/api/uploads/').pop()
     if (!filename) return
-    
+
+    const UPLOAD_DIR = getUploadDir()
     const filePath = path.join(UPLOAD_DIR, filename)
     if (existsSync(filePath)) {
       await unlink(filePath)
@@ -106,10 +122,9 @@ export async function localDel(url: string): Promise<void> {
 export function normalizeUrl(url: string): string {
   if (!url) return url
   // Already a local upload
-  if (url.includes('/uploads/')) return url
+  if (url.includes('/uploads/') || url.includes('/api/uploads/')) return url
   // Already an external image (unsplash, etc.)
   if (url.startsWith('http') && !url.includes('blob.vercel-storage.com') && !url.includes('public.blob.vercel-storage.com')) return url
   // For old Vercel Blob URLs, they'll need to be migrated
-  // For now, return as-is (they'll still work if Vercel Blob is still accessible)
   return url
 }

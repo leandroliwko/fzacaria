@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { localPut } from '@/lib/upload-local'
 import { getAuthStatus } from '@/lib/auth'
 
-// Server-side upload fallback — handles larger files (videos up to 100MB on Railway).
-// On Vercel hobby plan, API routes have a ~4.5MB body size limit.
-// Videos larger than that will fail with 413 — the error message explains this.
+// Client-side upload endpoint — receives resized images and videos.
+// On Vercel hobby plan, the default body size limit is ~4.5MB.
+// Images are resized client-side to <4MB, so they always fit.
+// Videos need the upload-server endpoint with higher limits.
 
 export const maxDuration = 60
 
@@ -17,17 +18,10 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
+    const contentType = formData.get('contentType') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'No se encontró el archivo' }, { status: 400 })
-    }
-
-    // Check file size (max 100MB on persistent hosting; on Vercel the body limit applies first)
-    if (file.size > 100 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'El archivo es demasiado grande (máx. 100MB).' },
-        { status: 413 }
-      )
     }
 
     // Add unique suffix to filename
@@ -39,12 +33,12 @@ export async function POST(request: NextRequest) {
       : originalName + '_' + randomSuffix
 
     const result = await localPut(uniqueName, file, {
-      contentType: file.type || undefined,
+      contentType: contentType || file.type || undefined,
     })
 
     return NextResponse.json({ url: result.url })
   } catch (error: any) {
-    console.error('Server upload error:', {
+    console.error('Upload error:', {
       message: error.message,
       name: error.name,
     })
