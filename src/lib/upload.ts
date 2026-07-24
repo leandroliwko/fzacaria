@@ -1,12 +1,17 @@
 /**
- * Robust upload utility — uses Vercel Blob on Vercel, local filesystem elsewhere.
+ * Robust upload utility — uses direct Vercel Blob upload for large files on Vercel,
+ * API route for small files.
  *
  * Strategy (on Vercel):
- * 1. For videos/large files: Direct upload to Vercel Blob (bypasses serverless body limit)
- * 2. For images/small files: Upload via /api/upload → Vercel Blob on server
+ * 1. For files > 4.5MB (videos, large images): Direct upload to Vercel Blob
+ *    using @vercel/blob/client upload() — bypasses serverless body size limit entirely.
+ *    NO fallback to API route (which would always get 413 for large files).
+ * 2. For files ≤ 4.5MB (resized images): Upload via /api/upload → Vercel Blob on server.
+ *    This works because images are resized to < 4MB client-side.
  *
  * Strategy (on Railway/local):
  * 1. Upload via /api/upload → local filesystem
+ *    No body size limit on Railway/local.
  *
  * For images: Auto-resize to WebP before upload for optimization.
  * For videos: Upload directly to Vercel Blob (no body size limit on client uploads).
@@ -15,11 +20,12 @@
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 500
 
-// Threshold: files > 4MB use direct Blob upload (videos, large images)
-const DIRECT_UPLOAD_THRESHOLD = 4 * 1024 * 1024
+// Threshold: files > 4.5MB MUST use direct Blob upload on Vercel
+// (API route body size limit is 4.5MB by default on Vercel, even Pro)
+const DIRECT_UPLOAD_THRESHOLD = 4.5 * 1024 * 1024
 
 /**
- * Upload a file — uses Vercel Blob direct upload for large files on Vercel,
+ * Upload a file — uses direct Vercel Blob upload for large files on Vercel,
  * API route for small files.
  */
 export async function uploadFile(
@@ -31,19 +37,30 @@ export async function uploadFile(
     onUploadProgress?: (progress: { percentage: number }) => void
   } = {}
 ): Promise<string> {
-  // On Vercel: large files go directly to Blob (no body size limit)
-  // This is the key fix for the 413 video upload error
-  if (file.size > DIRECT_UPLOAD_THRESHOLD && typeof window !== 'undefined') {
+  const isClientSide = typeof window !== 'undefined'
+  const isLargeFile = file.size > DIRECT_UPLOAD_THRESHOLD
+
+  // On Vercel client-side: large files MUST use direct Blob upload
+  // The API route body size limit is 4.5MB even on Vercel Pro,
+  // so falling through to API route would always get 413 for large files.
+  if (isLargeFile && isClientSide) {
     try {
       const url = await directBlobUpload(filename, file, options)
       return url
     } catch (directError: any) {
-      console.warn('Direct Blob upload failed, falling through to API route:', directError.message)
-      // Fall through to API route method
+      // Don't fall through to API route — it will always 413 for large files on Vercel.
+      // Show a specific error about the direct upload failure.
+      console.error('Direct Blob upload failed:', directError.message)
+      throw new Error(
+        `No se pudo subir el archivo (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
+        `Error de carga directa: ${directError.message}. ` +
+        'Verificá tu conexión a internet e intentá de nuevo.'
+      )
     }
   }
 
   // Strategy: Upload via /api/upload endpoint (server-side Blob or local filesystem)
+  // This only works for files ≤ 4.5MB (within Vercel's body size limit)
   let lastError: any = null
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -81,42 +98,39 @@ export async function uploadFile(
   console.warn('API upload failed after retries, trying server-side fallback:', lastError?.message)
 
   // Fallback: Server-side upload via /api/upload-server
-  if (file.size <= 50 * 1024 * 1024) {
-    try {
-      const formData = new FormData()
-      formData.append('file', file, filename)
+  // Only for files ≤ 4.5MB (within Vercel body size limit)
+  try {
+    const formData = new FormData()
+    formData.append('file', file, filename)
 
-      const response = await fetch('/api/upload-server', {
-        method: 'POST',
-        body: formData,
-      })
+    const response = await fetch('/api/upload-server', {
+      method: 'POST',
+      body: formData,
+    })
 
-      if (response.ok) {
-        const data = await response.json()
-        return data.url
-      }
-
-      const errData = await response.json().catch(() => ({}))
-      throw new Error(errData.error || `Server upload failed (${response.status})`)
-    } catch (serverError: any) {
-      console.error('Server-side upload also failed:', serverError.message)
-      throw new Error(
-        `No se pudo subir el archivo. Error: ${serverError.message}. ` +
-        'Verificá tu conexión a internet e intentá de nuevo.'
-      )
+    if (response.ok) {
+      const data = await response.json()
+      return data.url
     }
-  }
 
-  throw new Error(
-    `No se pudo subir el archivo (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-    `El upload supera el límite de 50MB.`
-  )
+    const errData = await response.json().catch(() => ({}))
+    throw new Error(errData.error || `Server upload failed (${response.status})`)
+  } catch (serverError: any) {
+    console.error('Server-side upload also failed:', serverError.message)
+    throw new Error(
+      `No se pudo subir el archivo. Error: ${serverError.message}. ` +
+      'Verificá tu conexión a internet e intentá de nuevo.'
+    )
+  }
 }
 
 /**
  * Direct upload to Vercel Blob from the browser using @vercel/blob/client.
  * The client-side upload() function communicates with /api/upload-token for auth,
  * then uploads directly to Vercel Blob — bypassing the serverless body size limit entirely.
+ *
+ * This is the ONLY way to upload files > 4.5MB on Vercel, since API routes have
+ * a 4.5MB body size limit by default (even on Pro plan).
  */
 async function directBlobUpload(
   filename: string,
