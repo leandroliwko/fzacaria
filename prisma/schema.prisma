@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String
+  role        String    @default("editor") // "superadmin" | "editor"
+  active      Boolean   @default(true)
+  phone       String?   // teléfono opcional para contacto
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  properties  Property[]
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  code        String   @default("PENDING")  // código de propiedad: CA35, DE36, etc.
+  title       String
+  type        String   // casa, departamento, chalet, ph, lote, local, campo, oficina, quinta, hotel
+  operation   String   // venta, alquiler, temporario
+  price       String
+  location    String
+  bedrooms    Int      @default(0)
+  bathrooms   Int      @default(0)
+  area        Int      @default(0)
+  image       String   // base64 data URL or external URL
+  images      String   @default("")  // JSON array of base64 data URLs
+  description String   @default("")
+  extras      String   @default("")  // comma-separated amenities
+  features    String   @default("")  // comma-separated legal features
+  featured    Boolean  @default(false)
+  active      Boolean  @default(true)
+  label       String?  // cartel sobre la foto: null | 'RESERVADO' | 'VENDIDO'
+  order       Int      @default(0) // orden manual en el panel admin (drag-and-drop)
+  video       String?  // video URL from Vercel Blob
+  tempStart   DateTime? // fecha inicio alquiler temporario (legacy)
+  tempEnd     DateTime? // fecha fin alquiler temporario (legacy)
+  coveredArea Int?     // m² cubiertos
+  totalArea   Int?     // m² descubiertos
+  latitude    Float    @default(-37.1067)
+  longitude   Float    @default(-56.8688)
+
+  // === ML-required fields ===
+  rooms        Int      @default(0)     // Ambientes (required for depto/PH)
+  parkingLots  Int      @default(0)     // Cocheras (required for most)
+  guests       Int      @default(0)     // Huéspedes (required for temporario)
+  landAccess   String   @default("")    // Acceso al lote: tierra/arena/asfalto/otro/ripio
+
+  // === ML optional but useful fields ===
+  propertyAge    Int    @default(0)     // Antigüedad en años
+  maintenanceFee String @default("")    // Expensas (valor numérico)
+  facing         String @default("")    // Orientación: norte/sur/este/oeste
+  disposition    String @default("")    // Disposición: frente/contrafrente/interno/lateral
+  furnished      Boolean @default(false) // Amoblado
+  unitFloor      Int    @default(0)    // Piso del departamento
+  propertySubtype String @default("")   // Subtipo: dúplex/loft/monoambiente/etc.
+  lotDisposition String @default("")    // Disposición del lote
+
+  // === Additional ML fields ===
+  warehouses       Int     @default(0)     // Bauleras
+  floors           Int     @default(0)     // Cantidad de pisos
+  apartmentNumber  String  @default("")    // Número del departamento
+  towerNumber      Int     @default(0)     // Número de torre
+  houseNumber      String  @default("")    // Número de la casa
+  apartmentsPerFloor Int   @default(0)     // Deptos por piso
+  lotDepth         Int     @default(0)     // Metros de fondo
+  lotWidth         Int     @default(0)     // Metros de frente
+  lotShape         String  @default("")    // Forma del terreno: Irregular/Plano/Regular
+  securityType     String  @default("")    // Tipo de seguridad: 24 horas/Diurno/Nocturno/Virtual
+  minimumStay      Int     @default(0)     // Estadía mínima (noches) - temporario
+  beds             Int     @default(0)     // Camas - temporario
+  availableFrom    String  @default("")    // Disponible desde (alquiler)
+  checkIn          String  @default("")    // Horario check in (temporario)
+  checkOut         String  @default("")    // Horario check out (temporario)
+  inscriptionNumber String @default("")    // Nro registro establecimiento (temporario)
+  offices          Int     @default(0)     // Número de oficinas
+  officesPerFloor  Int     @default(0)     // Oficinas por piso
+  wheelchairRamp   Boolean @default(false) // Rampa silla de ruedas
+  suitableForMortgage Boolean @default(false) // Apto crédito
+  professionalUse  Boolean @default(false) // Apto profesional
+  childrenWelcome  Boolean @default(false) // Apto familias con niños (temporario)
+  onlyFamilies     Boolean @default(false) // Solo familias (temporario)
+  monthlyRentFactor String @default("")    // Factor multiplicador de renta
+
+  // === ML boolean amenities (stored as JSON string) ===
+  // JSON object like {"HAS_POOL": true, "HAS_GRILL": true, ...}
+  mlAmenities  String   @default("{}")  // JSON: ML amenity booleans
+
+  // === ML-specific fields ===
+  propertyCode   String @default("")    // Código de propiedad (for ML PROPERTY_CODE)
+  contactSchedule String @default("")   // Horario de contacto
+  petsAllowed    Boolean @default(false) // Admite mascotas
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String?  // ID del usuario que creó la propiedad (relación con Admin)
+  createdBy   Admin?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  temporadas  Temporada[]
+  mlListing   MercadoLibreListing?
+  zpListing   ZonaPropListing?
+  cbListing   CabapropListing?
+}
+
+model Temporada {
+  id         String   @id @default(cuid())
+  name       String   // Nombre del segmento: "Primera quincena de enero", "Pascuas", etc.
+  startDate  DateTime // Fecha de inicio
+  endDate    DateTime // Fecha de fin
+  price      String   @default("") // Precio específico de la temporada (opcional)
+  currency   String   @default("USD") // Moneda: USD o ARS
+  available  Boolean  @default(true) // Disponibilidad
+  order      Int      @default(0) // Orden de aparición
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Article {
+  id        String   @id @default(cuid())
+  title     String
+  excerpt   String
+  content   String   @default("")
+  category  String
+  image     String   // base64 data URL or external URL
+  readTime  String   @default("5 min")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String   @default("")
+  subject   String   @default("")
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model TasacionRequest {
+  id            String   @id @default(cuid())
+  nombre        String
+  telefono      String
+  email         String   @default("")
+  tipoPropiedad String
+  zona          String
+  mensaje       String   @default("")
+  contacted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+model Visit {
+  id        String   @id @default(cuid())
+  path      String   @default("/")   // page path visited
+  referrer  String   @default("")    // where the visitor came from
+  country   String   @default("")    // country from headers
+  userAgent String   @default("")    // browser/device info
+  createdAt DateTime @default(now())
+}
+
+model Backup {
+  id           String   @id @default(cuid())
+  filename     String              // nombre del archivo de backup
+  size         Int                 // tamaño en bytes
+  type         String   @default("auto")  // auto o manual
+  status       String   @default("completed")  // completed, failed, validating
+  propertyCount Int    @default(0)  // cantidad de propiedades en el backup
+  articleCount  Int    @default(0)  // cantidad de artículos en el backup
+  integrityOk  Boolean  @default(true)  // pasó validación de integridad
+  notes        String   @default("")  // notas sobre el backup
+  blobUrl      String?  // URL del archivo en Vercel Blob
+  createdAt    DateTime @default(now())
+}
+
+model MLSettings {
+  id          String   @id @default(cuid())
+  appId       String   @default("")  // ML App ID (Client ID)
+  appSecret   String   @default("")  // ML App Secret (Client Secret)
+  redirectUri String  @default("https://fzacaria.com.ar/api/mercadolibre/auth/callback")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MercadoLibreToken {
+  id            String   @id @default(cuid())
+  accessToken   String
+  refreshToken  String?  // optional — ML doesn't always return it
+  expiresIn     Int                // seconds until expiration
+  scope         String   @default("")
+  tokenType     String   @default("Bearer")
+  mlUserId      String   @default("")  // ML user ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MercadoLibreListing {
+  id           String   @id @default(cuid())
+  propertyId   String   @unique
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  mlItemId     String   @default("")  // ML item ID (e.g. MLA123456789)
+  mlPermalink  String   @default("")  // ML public URL
+  status       String   @default("pending")  // pending, active, paused, closed, error
+  lastSynced   DateTime?
+  errorMessage String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ZonaPropListing {
+  id           String   @id @default(cuid())
+  propertyId   String   @unique
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  zpStatus     String   @default("active")  // active, paused, removed
+  zpId         String   @default("")  // ZonaProp aviso ID if known
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model CabapropSettings {
+  id          String   @id @default(cuid())
+  apiKey      String   @default("")  // Cabaprop API Key
+  webhookUrl  String   @default("")  // URL para notificaciones de Cabaprop
+  matricula   String   @default("")  // Matrícula CUCICBA
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CabapropListing {
+  id           String   @id @default(cuid())
+  propertyId   String   @unique
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  cbStatus     String   @default("active")  // active, paused, removed
+  cbId         String   @default("")  // Cabaprop aviso ID if known
+  cbPermalink  String   @default("")  // Cabaprop public URL
+  lastSynced   DateTime?
+  errorMessage String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ============================================================
+// Redes — Inter-agency networks and connection requests
+// Inspired by PixelInmobiliario CRM's networking module.
+// Lets an agency register its own network(s), invite other
+// agencies to join, and accept/reject incoming requests.
+// ============================================================
+
+model Network {
+  id            String   @id @default(cuid())
+  name          String                  // network display name
+  description   String   @default("")   // optional bio
+  type          String   @default("private") // private | public
+  feePercent    Int      @default(50)   // shared commission percentage (0-100)
+  logoUrl       String?                 // optional logo image
+  active        Boolean  @default(true)
+  createdById   String   @default("")   // admin email who created the network
+  createdByName String   @default("")   // admin display name
+  contactEmail  String   @default("")   // public contact email
+  contactPhone  String   @default("")   // public contact phone
+  city          String   @default("")   // city/region for the network
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connections   NetworkConnection[]
+}
+
+model NetworkConnection {
+  id              String   @id @default(cuid())
+  networkId       String
+  network         Network  @relation(fields: [networkId], references: [id], onDelete: Cascade)
+
+  // The agency requesting/being-invited to join
+  inmoName        String                  // requesting agency name
+  inmoEmail       String                  // contact email
+  inmoPhone       String   @default("")   // contact phone
+  inmoCity        String   @default("")   // agency city
+  inmoMatricula   String   @default("")   // CUCICBA matrícula (optional)
+  message         String   @default("")   // greeting/intro message
+
+  // Request lifecycle
+  status          String   @default("pending")  // pending | accepted | rejected | cancelled
+  creator         Boolean  @default(false)      // true = creator of the network (auto-accepted)
+  requestedById   String   @default("")         // admin email of requester
+  actionedAt      DateTime?                     // when accepted/rejected/cancelled
+  actionNotes     String   @default("")         // optional notes from actioner
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([networkId])
+  @@index([status])
+}
+
+// ============================================================
+// Pixel Inmobiliario CRM integration
+// Stores the OAuth2 tokens issued by pixelinmobiliario.com.ar
+// so the admin cpanel can act on behalf of the inmobiliaria.
+// ============================================================
+
+model PixelInmobiliarioToken {
+  id              String   @id @default(cuid())
+  accessToken     String
+  refreshToken    String
+  expiresAt       DateTime               // computed from expires_in
+  tokenType       String   @default("Bearer")
+  // Cached user snapshot from /api/v1/crm/user
+  userId          Int?
+  userName        String   @default("")
+  realtyName      String   @default("")
+  email           String   @default("")
+  plan            String   @default("")
+  city            String   @default("")
+  state           String   @default("")
+  country         String   @default("")
+  phone           String   @default("")
+  website         String   @default("")
+  // Encrypted credentials (so user doesn't need to re-enter)
+  storedEmail     String   @default("")
+  storedPassword  String   @default("")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

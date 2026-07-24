@@ -1,0 +1,309 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@source "../components/**/*.{js,ts,jsx,tsx}";
+
+@theme {
+  /* Lavender family (primary) - Pantone */
+  --color-navy: #7A4E9B;
+  --color-navy-light: #9D7FB8;
+  --color-navy-dark: #5D3A7A;
+
+  /* Teal family (accent) - Olive green #6d7357 */
+  --color-gold: #6d7357;
+  --color-gold-light: #8a8e76;
+  --color-gold-dark: #525641;
+
+  /* Background/surface replacements for white/gray */
+  --color-cream: #F3EFF8;
+  --color-surface: #E8E0F0;
+  --color-soft: #D4CCE4;
+
+  /* Additional Pantone tones */
+  --color-lavender: #C8B7D9;
+  --color-lavender-light: #B5A4D6;
+  --color-teal-pale: #6d7357;
+  --color-teal-soft: #c8cabb;
+  --color-teal-500: #6d7357;
+
+  /* Green family override - Olive green #6d7357 */
+  --color-green-50: #f0f1ec;
+  --color-green-100: #d8dbd0;
+  --color-green-200: #b8bca9;
+  --color-green-300: #9da295;
+  --color-green-400: #838980;
+  --color-green-500: #6d7357;
+  --color-green-600: #5a5f49;
+  --color-green-700: #4a4e3d;
+  --color-green-800: #3b3e33;
+  --color-green-900: #2d2f28;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #F3EFF8;
+  --foreground: #5D3A7A;
+  --card: #FAF8FC;
+  --card-foreground: #5D3A7A;
+  --popover: #FAF8FC;
+  --popover-foreground: #5D3A7A;
+  --primary: #7A4E9B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8E0F0;
+  --secondary-foreground: #5D3A7A;
+  --muted: #E8E0F0;
+  --muted-foreground: #9D7FB8;
+  --accent: #c8cabb;
+  --accent-foreground: #525641;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #C8B7D9;
+  --input: #C8B7D9;
+  --ring: #6d7357;
+  --chart-1: #7A4E9B;
+  --chart-2: #6d7357;
+  --chart-3: #9D7FB8;
+  --chart-4: #8a8e76;
+  --chart-5: #B5A4D6;
+  --sidebar: #F3EFF8;
+  --sidebar-foreground: #5D3A7A;
+  --sidebar-primary: #7A4E9B;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E8E0F0;
+  --sidebar-accent-foreground: #5D3A7A;
+  --sidebar-border: #C8B7D9;
+  --sidebar-ring: #6d7357;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar - Pantone lavender */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #E8E0F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #9D7FB8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7A4E9B;
+}
+
+/* Hero parallax overlay - azul oscuro a lavanda */
+.hero-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 60, 0.88) 0%,
+    rgba(40, 40, 100, 0.75) 35%,
+    rgba(93, 58, 122, 0.6) 65%,
+    rgba(181, 164, 214, 0.35) 100%
+  );
+}
+
+/* Teal gradient text */
+.gold-text {
+  background: linear-gradient(135deg, #6d7357, #8a8e76, #6d7357);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Animated underline */
+.animated-underline {
+  position: relative;
+  display: inline-block;
+}
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #6d7357;
+  transition: width 0.3s ease;
+}
+.animated-underline:hover::after {
+  width: 100%;
+}
+
+/* Property card hover */
+.property-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.property-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(122, 78, 155, 0.15);
+}
+
+/* Floating WhatsApp animation */
+@keyframes pulse-whatsapp {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+}
+.whatsapp-pulse {
+  animation: pulse-whatsapp 2s infinite;
+}
+
+/* Shimmer animation for loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(109, 115, 87, 0.1) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Section divider */
+.section-divider {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #6d7357, transparent);
+  width: 80px;
+  margin: 0 auto;
+}
+
+/* Gradient border */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, #6d7357, #7A4E9B);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Logo color change on scroll - transforms white logo to navy-dark (#5D3A7A) */
+.logo-scrolled {
+  filter: brightness(0) invert(0.36) sepia(0.55) saturate(3.2) hue-rotate(237deg);
+}
+
+/* Lavender botanical background watermark - light sections */
+.lavender-bg {
+  position: relative;
+  overflow: hidden;
+}
+.lavender-bg::before,
+.lavender-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: clamp(80px, 15vw, 200px);
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 0;
+}
+.lavender-bg::before {
+  left: 0;
+  background-image: url('/lavender-left.svg');
+  background-position: left bottom;
+  opacity: 0.5;
+}
+.lavender-bg::after {
+  right: 0;
+  background-image: url('/lavender-right.svg');
+  background-position: right bottom;
+  opacity: 0.5;
+}
+.lavender-bg > *:not(.absolute):not(.fixed) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lavender botanical background watermark - dark sections */
+.lavender-bg-dark {
+  position: relative;
+  overflow: hidden;
+}
+.lavender-bg-dark::before,
+.lavender-bg-dark::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: clamp(80px, 15vw, 200px);
+  height: 100%;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 0;
+}
+.lavender-bg-dark::before {
+  left: 0;
+  background-image: url('/lavender-left.svg');
+  background-position: left bottom;
+  opacity: 0.55;
+}
+.lavender-bg-dark::after {
+  right: 0;
+  background-image: url('/lavender-right.svg');
+  background-position: right bottom;
+  opacity: 0.55;
+}
+.lavender-bg-dark > *:not(.absolute):not(.fixed) {
+  position: relative;
+  z-index: 1;
+}

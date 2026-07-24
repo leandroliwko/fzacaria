@@ -1,0 +1,18 @@
+{
+  "crons": [
+    {
+      "path": "/api/backup/auto",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/api/upload-server/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/upload/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

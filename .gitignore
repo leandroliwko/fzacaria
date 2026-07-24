@@ -1,0 +1,86 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+.claude
+.z-ai-config
+*.log
+dev.log
+dev.out.log
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+
+# Non-Next.js directories (PHP, static exports, scripts, etc.)
+/php-site/
+/ftp-site/
+/static-site/
+/static-upload/
+/scripts/
+/agent-ctx/
+/tool-results/
+/upload/
+/db/
+/download/
+/examples/
+/_disabled_app/
+/persistent-server.sh
+/start-server.sh
+/standalone-server.js
+/server.js
+/Dockerfile
+/Caddyfile
+/railway.toml
+/deploy-fix.sh
+/transform-colors.js
+/ml-search.json
+/ml-detail-search.json
+/ml-api-search.json
+/pantone-analysis.json
+/components.json
+/bun.lock
+/worklog.md
+/skills/
+/.env

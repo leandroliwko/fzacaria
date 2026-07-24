@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 600" fill="none">
+  <!-- RIGHT SIDE lavender plants (mirrored) -->
+
+  <!-- Plant 4 - Far right edge -->
+  <g opacity="0.7">
+    <path d="M120 600 Q116 540 122 470 Q128 400 120 340 Q116 310 122 270" stroke="#7b7f6d" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M122 530 Q140 512 156 492 Q142 500 128 512 Q122 520 122 530Z" fill="#b7c99c" opacity="0.8"/>
+    <path d="M120 530 Q102 510 86 492 Q100 502 114 514 Q120 522 120 530Z" fill="#a8bd8e" opacity="0.7"/>
+    <path d="M123 420 Q140 402 156 384 Q142 390 128 402 Q123 410 123 420Z" fill="#b7c99c" opacity="0.75"/>
+    <path d="M121 420 Q104 400 88 382 Q102 392 116 404 Q121 412 121 420Z" fill="#a8bd8e" opacity="0.65"/>
+    <path d="M121 340 Q136 324 150 308 Q138 314 126 324 Q121 332 121 340Z" fill="#b7c99c" opacity="0.7"/>
+    <path d="M119 340 Q104 322 90 306 Q104 316 116 326 Q119 334 119 340Z" fill="#a8bd8e" opacity="0.6"/>
+    <ellipse cx="125" cy="262" rx="6" ry="4.5" fill="#cbb2ec" opacity="0.8"/>
+    <ellipse cx="114" cy="258" rx="5.5" ry="4" fill="#b5a4d6" opacity="0.7"/>
+    <ellipse cx="130" cy="254" rx="5" ry="3.5" fill="#cbb2ec" opacity="0.65"/>
+    <ellipse cx="118" cy="248" rx="5.5" ry="4" fill="#9D7FB8" opacity="0.7"/>
+    <ellipse cx="124" cy="242" rx="4.5" ry="3.5" fill="#cbb2ec" opacity="0.75"/>
+    <ellipse cx="112" cy="244" rx="4" ry="3" fill="#b5a4d6" opacity="0.6"/>
+    <ellipse cx="128" cy="236" rx="4" ry="3" fill="#9D7FB8" opacity="0.5"/>
+    <ellipse cx="118" cy="232" rx="4.5" ry="3" fill="#cbb2ec" opacity="0.6"/>
+  </g>
+
+  <!-- Plant 5 - Right inner -->
+  <g opacity="0.6">
+    <path d="M160 600 Q154 530 158 460 Q164 390 156 330 Q152 300 158 260" stroke="#7b7f6d" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M158 500 Q176 482 190 464 Q176 470 162 482 Q158 490 158 500Z" fill="#b7c99c" opacity="0.75"/>
+    <path d="M156 500 Q138 480 122 462 Q136 472 150 484 Q156 492 156 500Z" fill="#a8bd8e" opacity="0.65"/>
+    <path d="M158 400 Q174 384 188 368 Q174 374 162 384 Q158 392 158 400Z" fill="#b7c99c" opacity="0.7"/>
+    <path d="M156 400 Q138 382 124 366 Q136 374 148 386 Q156 394 156 400Z" fill="#a8bd8e" opacity="0.6"/>
+    <ellipse cx="162" cy="252" rx="5.5" ry="4" fill="#cbb2ec" opacity="0.7"/>
+    <ellipse cx="150" cy="248" rx="5" ry="3.5" fill="#9D7FB8" opacity="0.6"/>
+    <ellipse cx="166" cy="242" rx="4.5" ry="3.5" fill="#b5a4d6" opacity="0.65"/>
+    <ellipse cx="154" cy="238" rx="5" ry="3.5" fill="#cbb2ec" opacity="0.6"/>
+    <ellipse cx="160" cy="232" rx="4" ry="3" fill="#9D7FB8" opacity="0.5"/>
+    <ellipse cx="148" cy="234" rx="3.5" ry="3" fill="#b5a4d6" opacity="0.5"/>
+  </g>
+
+  <!-- Plant 6 - Right mid -->
+  <g opacity="0.5">
+    <path d="M60 600 Q56 550 62 490 Q68 430 60 370 Q56 340 62 300" stroke="#7b7f6d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M62 520 Q78 504 92 488 Q80 494 68 504 Q62 512 62 520Z" fill="#b7c99c" opacity="0.7"/>
+    <path d="M60 520 Q44 504 30 488 Q44 496 56 506 Q60 514 60 520Z" fill="#a8bd8e" opacity="0.6"/>
+    <path d="M62 430 Q78 414 92 400 Q80 406 68 414 Q62 422 62 430Z" fill="#b7c99c" opacity="0.65"/>
+    <path d="M60 430 Q44 414 30 398 Q44 406 56 416 Q60 424 60 430Z" fill="#a8bd8e" opacity="0.55"/>
+    <ellipse cx="64" cy="292" rx="5" ry="3.5" fill="#cbb2ec" opacity="0.6"/>
+    <ellipse cx="54" cy="288" rx="4.5" ry="3.5" fill="#9D7FB8" opacity="0.5"/>
+    <ellipse cx="68" cy="282" rx="4.5" ry="3" fill="#b5a4d6" opacity="0.55"/>
+    <ellipse cx="58" cy="278" rx="4" ry="3" fill="#cbb2ec" opacity="0.5"/>
+    <ellipse cx="64" cy="272" rx="4" ry="2.5" fill="#9D7FB8" opacity="0.4"/>
+  </g>
+</svg>
