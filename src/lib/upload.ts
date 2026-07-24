@@ -7,7 +7,7 @@
  * 3. If still failing, fall back to server-side upload via /api/upload-server
  *
  * For images: Auto-resize to WebP before upload for optimization.
- * For videos: Upload directly (up to 100MB).
+ * For videos: Upload directly (up to 50MB on Vercel Pro).
  */
 
 import { localPut } from './upload-local'
@@ -64,8 +64,8 @@ export async function uploadFile(
 
   console.warn('Client upload failed after retries, trying server-side fallback:', lastError?.message)
 
-  // Strategy 2: Server-side upload fallback
-  if (file.size <= 100 * 1024 * 1024) {
+  // Strategy 2: Server-side upload fallback (Vercel Pro: max 50MB body size)
+  if (file.size <= 50 * 1024 * 1024) {
     try {
       const formData = new FormData()
       formData.append('file', file, filename)
@@ -93,7 +93,7 @@ export async function uploadFile(
 
   throw new Error(
     `No se pudo subir el archivo (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-    `El upload supera el límite de 100MB.`
+    `El upload supera el límite de 50MB en Vercel Pro.`
   )
 }
 

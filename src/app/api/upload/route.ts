@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { localPut } from '@/lib/upload-local'
 import { getAuthStatus } from '@/lib/auth'
 
-// Client-side upload endpoint — receives resized images and videos.
-// On Vercel hobby plan, the default body size limit is ~4.5MB.
-// Images are resized client-side to <4MB, so they always fit.
-// Videos need the upload-server endpoint with higher limits.
+// Client-side upload endpoint — Vercel Pro supports up to 50MB body size.
+// Images are resized client-side to <4MB for fast upload.
+// Videos up to 50MB are accepted.
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 export async function POST(request: NextRequest) {
   const auth = await getAuthStatus()
@@ -22,6 +21,14 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: 'No se encontró el archivo' }, { status: 400 })
+    }
+
+    // Vercel Pro body size limit is 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: `El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo 50MB en Vercel Pro.` },
+        { status: 413 }
+      )
     }
 
     // Add unique suffix to filename

@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { localPut } from '@/lib/upload-local'
 import { getAuthStatus } from '@/lib/auth'
 
-// Server-side upload fallback — handles larger files (videos up to 100MB on Railway).
-// On Vercel hobby plan, API routes have a ~4.5MB body size limit.
-// Videos larger than that will fail with 413 — the error message explains this.
+// Server-side upload fallback — Vercel Pro supports up to 50MB body size.
+// Handles larger files that may fail on the primary /api/upload route.
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 export async function POST(request: NextRequest) {
   const auth = await getAuthStatus()
@@ -22,10 +21,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se encontró el archivo' }, { status: 400 })
     }
 
-    // Check file size (max 100MB on persistent hosting; on Vercel the body limit applies first)
-    if (file.size > 100 * 1024 * 1024) {
+    // Vercel Pro body size limit is 50MB
+    if (file.size > 50 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'El archivo es demasiado grande (máx. 100MB).' },
+        { error: `El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo 50MB en Vercel Pro.` },
         { status: 413 }
       )
     }
