@@ -4,12 +4,11 @@ import path from 'path'
 import { existsSync } from 'fs'
 
 /**
- * On Vercel: files are written to /tmp/uploads (ephemeral but writable).
- * On Railway / local: files are in public/uploads (persistent).
- * This route serves from BOTH locations, checking /tmp first.
+ * Serve uploaded files from local filesystem (Railway / local dev).
+ * On Vercel, files are stored in Vercel Blob and served directly from blob URLs,
+ * so this route is only needed for non-Vercel environments.
  */
 
-const TMP_UPLOAD_DIR = path.join('/tmp', 'uploads')
 const STATIC_UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 
 // MIME type map
@@ -41,24 +40,19 @@ export async function GET(
       return NextResponse.json({ error: 'Nombre de archivo inválido' }, { status: 400 })
     }
 
-    // Try /tmp/uploads first (Vercel runtime uploads), then public/uploads (static)
-    const candidates = [TMP_UPLOAD_DIR, STATIC_UPLOAD_DIR]
-    let filePath: string | null = null
-    let fileStat: any = null
+    const filePath = path.join(STATIC_UPLOAD_DIR, safeName)
 
-    for (const dir of candidates) {
-      const candidate = path.join(dir, safeName)
-      // Ensure the resolved path is still within the directory
-      if (!candidate.startsWith(dir)) continue
-      if (existsSync(candidate)) {
-        filePath = candidate
-        fileStat = await stat(candidate)
-        break
-      }
+    // Ensure the resolved path is still within STATIC_UPLOAD_DIR
+    if (!filePath.startsWith(STATIC_UPLOAD_DIR)) {
+      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 })
     }
 
-    if (!filePath || !fileStat) {
-      return NextResponse.json({ error: 'Imagen no encontrada' }, { status: 404 })
+    // Check file exists
+    let fileStat
+    try {
+      fileStat = await stat(filePath)
+    } catch {
+      return NextResponse.json({ error: 'Archivo no encontrado' }, { status: 404 })
     }
 
     // Read file
