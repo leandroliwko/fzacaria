@@ -114,9 +114,9 @@ export async function uploadFile(
 }
 
 /**
- * Direct upload to Vercel Blob from the browser.
- * Gets an upload URL from /api/upload-token, then PUTs the file directly.
- * This bypasses the serverless function body size limit entirely.
+ * Direct upload to Vercel Blob from the browser using @vercel/blob/client.
+ * The client-side upload() function communicates with /api/upload-token for auth,
+ * then uploads directly to Vercel Blob — bypassing the serverless body size limit entirely.
  */
 async function directBlobUpload(
   filename: string,
@@ -126,38 +126,27 @@ async function directBlobUpload(
     onUploadProgress?: (progress: { percentage: number }) => void
   } = {}
 ): Promise<string> {
-  // Step 1: Get upload URL from server
-  const tokenResponse = await fetch('/api/upload-token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename,
-      contentType: options.contentType || (file instanceof File ? file.type : undefined),
-    }),
+  const { upload } = await import('@vercel/blob/client')
+
+  // Add unique suffix to filename
+  const randomSuffix = Math.random().toString(36).substring(2, 8)
+  const lastDot = filename.lastIndexOf('.')
+  const uniqueName = lastDot > 0
+    ? filename.substring(0, lastDot) + '_' + randomSuffix + filename.substring(lastDot)
+    : filename + '_' + randomSuffix
+
+  const result = await upload(uniqueName, file, {
+    access: 'public',
+    handleUploadUrl: '/api/upload-token',
+    contentType: options.contentType || (file instanceof File ? file.type : undefined),
+    onUploadProgress: options.onUploadProgress
+      ? (event) => {
+          options.onUploadProgress!({ percentage: event.percentage })
+        }
+      : undefined,
   })
 
-  if (!tokenResponse.ok) {
-    const errData = await tokenResponse.json().catch(() => ({}))
-    throw new Error(errData.error || 'Error getting upload URL')
-  }
-
-  const { uploadUrl, blobUrl } = await tokenResponse.json()
-
-  // Step 2: Upload file directly to Vercel Blob via PUT
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: {
-      'Content-Type': options.contentType || (file instanceof File ? file.type : 'application/octet-stream'),
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`Direct upload failed (${response.status})`)
-  }
-
-  const result = await response.json()
-  return result.url || blobUrl
+  return result.url
 }
 
 // ============================================================
