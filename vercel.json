@@ -8,11 +8,17 @@
   "functions": {
     "src/app/api/upload-server/route.ts": {
       "maxDuration": 120,
-      "memory": 3008
+      "memory": 3008,
+      "bodySizeLimit": "50mb"
     },
     "src/app/api/upload/route.ts": {
       "maxDuration": 120,
-      "memory": 3008
+      "memory": 3008,
+      "bodySizeLimit": "50mb"
+    },
+    "src/app/api/upload-token/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }
