@@ -1,22 +1,26 @@
 /**
- * Robust upload utility — uses local filesystem storage.
+ * Robust upload utility — uses Vercel Blob on Vercel, local filesystem elsewhere.
  *
- * Strategy:
- * 1. Try client-side upload via /api/upload (saves to server filesystem)
- * 2. If that fails, retry up to 3 times with exponential backoff
- * 3. If still failing, fall back to server-side upload via /api/upload-server
+ * Strategy (on Vercel):
+ * 1. For videos/large files: Direct upload to Vercel Blob (bypasses serverless body limit)
+ * 2. For images/small files: Upload via /api/upload → Vercel Blob on server
+ *
+ * Strategy (on Railway/local):
+ * 1. Upload via /api/upload → local filesystem
  *
  * For images: Auto-resize to WebP before upload for optimization.
- * For videos: Upload directly (up to 50MB on Vercel Pro).
+ * For videos: Upload directly to Vercel Blob (no body size limit on client uploads).
  */
-
-import { localPut } from './upload-local'
 
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 500
 
+// Threshold: files > 4MB use direct Blob upload (videos, large images)
+const DIRECT_UPLOAD_THRESHOLD = 4 * 1024 * 1024
+
 /**
- * Upload a file to the server with automatic fallback and retry.
+ * Upload a file — uses Vercel Blob direct upload for large files on Vercel,
+ * API route for small files.
  */
 export async function uploadFile(
   filename: string,
@@ -27,9 +31,21 @@ export async function uploadFile(
     onUploadProgress?: (progress: { percentage: number }) => void
   } = {}
 ): Promise<string> {
+  // On Vercel: large files go directly to Blob (no body size limit)
+  // This is the key fix for the 413 video upload error
+  if (file.size > DIRECT_UPLOAD_THRESHOLD && typeof window !== 'undefined') {
+    try {
+      const url = await directBlobUpload(filename, file, options)
+      return url
+    } catch (directError: any) {
+      console.warn('Direct Blob upload failed, falling through to API route:', directError.message)
+      // Fall through to API route method
+    }
+  }
+
+  // Strategy: Upload via /api/upload endpoint (server-side Blob or local filesystem)
   let lastError: any = null
 
-  // Strategy 1: Client-side upload via /api/upload endpoint
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const formData = new FormData()
@@ -62,9 +78,9 @@ export async function uploadFile(
     }
   }
 
-  console.warn('Client upload failed after retries, trying server-side fallback:', lastError?.message)
+  console.warn('API upload failed after retries, trying server-side fallback:', lastError?.message)
 
-  // Strategy 2: Server-side upload fallback (Vercel Pro: max 50MB body size)
+  // Fallback: Server-side upload via /api/upload-server
   if (file.size <= 50 * 1024 * 1024) {
     try {
       const formData = new FormData()
@@ -93,8 +109,55 @@ export async function uploadFile(
 
   throw new Error(
     `No se pudo subir el archivo (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
-    `El upload supera el límite de 50MB en Vercel Pro.`
+    `El upload supera el límite de 50MB.`
   )
+}
+
+/**
+ * Direct upload to Vercel Blob from the browser.
+ * Gets an upload URL from /api/upload-token, then PUTs the file directly.
+ * This bypasses the serverless function body size limit entirely.
+ */
+async function directBlobUpload(
+  filename: string,
+  file: File | Blob,
+  options: {
+    contentType?: string
+    onUploadProgress?: (progress: { percentage: number }) => void
+  } = {}
+): Promise<string> {
+  // Step 1: Get upload URL from server
+  const tokenResponse = await fetch('/api/upload-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      filename,
+      contentType: options.contentType || (file instanceof File ? file.type : undefined),
+    }),
+  })
+
+  if (!tokenResponse.ok) {
+    const errData = await tokenResponse.json().catch(() => ({}))
+    throw new Error(errData.error || 'Error getting upload URL')
+  }
+
+  const { uploadUrl, blobUrl } = await tokenResponse.json()
+
+  // Step 2: Upload file directly to Vercel Blob via PUT
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': options.contentType || (file instanceof File ? file.type : 'application/octet-stream'),
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Direct upload failed (${response.status})`)
+  }
+
+  const result = await response.json()
+  return result.url || blobUrl
 }
 
 // ============================================================
