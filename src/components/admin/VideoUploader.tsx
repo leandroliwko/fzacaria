@@ -59,9 +59,9 @@ export default function VideoUploader({ videoUrl, onVideoChange }: VideoUploader
       return
     }
 
-    // Validate size (100MB)
+    // Validate size (100MB — Vercel Blob supports large uploads via direct client upload)
     if (file.size > 100 * 1024 * 1024) {
-      setError('El archivo es demasiado grande (máx. 100MB)')
+      setError(`El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx. 100MB.`)
       return
     }
 
@@ -162,7 +162,7 @@ export default function VideoUploader({ videoUrl, onVideoChange }: VideoUploader
               <p className="text-sm text-navy">
                 Hacé click para subir un video
               </p>
-              <p className="text-xs text-lavender-light">MP4, MOV, 3GP, WEBM · Máx. 100MB</p>
+              <p className="text-xs text-lavender-light">MP4, MOV, 3GP, WEBM · Máx. 100MB · Subida directa</p>
             </div>
           )}
         </div>
