@@ -576,6 +576,19 @@ export default function PropertyForm({
         </div>
       </div>
 
+      {/* ═══════════════════ TÍTULO ═══════════════════ */}
+      <div className="bg-cream rounded-xl border border-lavender/30 p-6 shadow-sm space-y-4">
+        <h2 className="font-bold text-navy text-lg">Título</h2>
+        <div>
+          <label className="block text-sm font-medium text-navy-dark mb-1">
+            Título de la propiedad <span className="text-red-500">*</span>
+          </label>
+          <input type="text" value={form.title} onChange={(e) => updateForm({ title: e.target.value })}
+            className="w-full px-4 py-3 rounded-lg border border-lavender/50 focus:ring-2 focus:ring-gold focus:border-gold text-sm"
+            placeholder="Ej: Casa en Pinamar Norte, Departamento con vista al mar" />
+        </div>
+      </div>
+
       {/* ═══════════════════ Section 2: OPERACIÓN ═══════════════════ */}
       <div className="bg-cream rounded-xl border border-lavender/30 p-6 shadow-sm space-y-4">
         <h2 className="font-bold text-navy text-lg">Operación</h2>
