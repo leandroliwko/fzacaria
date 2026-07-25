@@ -634,6 +634,9 @@ export default function AdminPropiedades() {
                 </div>
               </div>
               <CardContent className="p-2">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[10px] font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded">{property.code || '—'}</span>
+                </div>
                 <h3 className="font-semibold text-navy text-xs truncate">{property.title}</h3>
                 <div className="flex items-center gap-0.5 mt-0.5 text-navy-light text-[10px]">
                   <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
@@ -743,6 +746,7 @@ export default function AdminPropiedades() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded">{property.code || '—'}</span>
                         <h3 className="font-semibold text-navy text-sm truncate">{property.title}</h3>
                         <Badge className="bg-navy text-white border-0 text-[9px]">
                           {propertyTypeLabels[property.type] || property.type}
@@ -898,7 +902,10 @@ export default function AdminPropiedades() {
 
               {/* Content */}
               <CardContent className="p-4">
-                <h3 className="font-semibold text-navy truncate">{property.title}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gold bg-gold/10 px-2 py-0.5 rounded">{property.code || '—'}</span>
+                  <h3 className="font-semibold text-navy truncate">{property.title}</h3>
+                </div>
                 <div className="flex items-center gap-1 mt-1 text-navy-light text-sm">
                   <MapPin className="w-3 h-3" />
                   <span className="truncate">{property.location}</span>
