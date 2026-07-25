@@ -144,11 +144,10 @@ export async function POST(request: NextRequest) {
     const existingCodes = existingProperties.map(p => p.code).filter(c => c !== 'PENDING')
     data.code = generatePropertyCode(data.type, existingCodes)
 
-    // Auto-assign order = max(order) + 1 so the new property goes to the END of
-    // the manual panel order (instead of default 0, which would put it at the top
-    // and mix with all other properties that also have order=0).
-    const maxOrderRow = await prisma.property.aggregate({ _max: { order: true } })
-    data.order = (maxOrderRow._max.order ?? -1) + 1
+    // New property goes FIRST in the list: set order = 0 and shift all
+    // existing properties up by 1, so manual ordering is preserved.
+    await prisma.property.updateMany({ data: { order: { increment: 1 } } })
+    data.order = 0
 
     // Use a transaction to create property + temporadas atomically
     const property = await prisma.$transaction(async (tx) => {
